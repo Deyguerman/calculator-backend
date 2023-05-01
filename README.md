@@ -49,3 +49,8 @@ Note: If you have issues installing Local DynamoDb, follow these steps:
   - Modify "http" import to "https"
   - Run "npx serverless dynamodb install" command in your terminal
 ```
+
+### Testing
+```bash
+npm run test
+```
