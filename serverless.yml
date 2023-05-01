@@ -1,0 +1,123 @@
+service: calculator-backend
+frameworkVersion: "3"
+
+custom:
+  usersTable: calculator-users
+  recordsTable: calculator-records
+  operationsTable: calculator-operations
+  dynamodb:
+    # If you only want to use DynamoDB Local in some stages, declare them here
+    stages:
+      - dev
+    start:
+      port: 8000
+      inMemory: true
+      migrate: true
+      seed: true
+    seed:
+      dev:
+        sources:
+          - table: ${self:custom.usersTable}
+            sources: [./src/assets/fake-users.json]
+          - table: ${self:custom.operationsTable}
+            sources: [./src/assets/operations.json]
+
+plugins:
+  - serverless-dynamodb-local
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  
+  httpApi:
+    cors: true
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [UsersTable, Arn]
+            - Fn::GetAtt: [RecordsTable, Arn]
+            - Fn::GetAtt: [OperationsTable, Arn]
+  environment:
+    USERS_TABLE: ${self:custom.usersTable}
+    RECORDS_TABLE: ${self:custom.recordsTable}
+    OPERATIONS_TABLE: ${self:custom.operationsTable}
+    TOKEN_SECRET: 'CALCULATOR-SECRET'
+
+functions:
+  api:
+    handler: index.handler
+    events:
+      - httpApi: "*"
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: username
+            AttributeType: S
+        KeySchema:
+          - AttributeName: username
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.usersTable}
+    RecordsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: user_id
+            AttributeType: N
+          - AttributeName: date
+            AttributeType: N
+          - AttributeName: operation_id
+            AttributeType: N
+          - AttributeName: amount
+            AttributeType: N
+        KeySchema:
+          - AttributeName: user_id
+            KeyType: HASH
+          - AttributeName: date
+            KeyType: RANGE
+        GlobalSecondaryIndexes:
+          - IndexName: UserIdOperationIndex
+            KeySchema:
+              - AttributeName: user_id
+                KeyType: HASH
+              - AttributeName: operation_id
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: UserIdCostIndex
+            KeySchema:
+              - AttributeName: user_id
+                KeyType: HASH
+              - AttributeName: amount
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.recordsTable}
+    OperationsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: N
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${self:custom.operationsTable}

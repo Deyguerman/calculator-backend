@@ -1,0 +1,38 @@
+[
+    {
+        "id": 1,
+        "type": "Addition",
+        "sign": "+",
+        "cost": 5
+    },
+    {
+        "id": 2,
+        "type": "Subtraction",
+        "sign": "-",
+        "cost": 5
+    },
+    {
+        "id": 3,
+        "type": "Multiplication",
+        "sign": "*",
+        "cost": 10
+    },
+    {
+        "id": 4,
+        "type": "Division",
+        "sign": "/",
+        "cost": 10
+    },
+    {
+        "id": 5,
+        "type": "Square Root",
+        "sign": "^",
+        "cost": 15
+    },
+    {
+        "id": 6,
+        "type": "Random String",
+        "sign": "",
+        "cost": 5
+    }
+]
